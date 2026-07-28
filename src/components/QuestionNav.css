@@ -1,0 +1,101 @@
+.qnav {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  position: sticky;
+  top: 16px;
+}
+
+.qnav-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  margin-bottom: 12px;
+}
+
+.qnav-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.qnav-btn {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qnav-btn:hover {
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.qnav-btn.current {
+  border-color: var(--blue);
+  background: var(--blue-dim);
+  color: var(--blue);
+  box-shadow: 0 0 8px rgba(77,159,255,0.2);
+}
+
+.qnav-btn.nav-answered {
+  border-color: var(--border2);
+  color: var(--text2);
+  background: var(--surface2);
+}
+
+.qnav-btn.nav-correct {
+  border-color: var(--green);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.qnav-btn.nav-wrong {
+  border-color: var(--red);
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.qnav-btn.nav-partial {
+  border-color: var(--orange);
+  background: var(--orange-dim);
+  color: var(--orange);
+}
+
+.qnav-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.leg-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.leg-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.dot-answered { background: var(--surface2); border: 1px solid var(--border2); }
+.dot-correct { background: var(--green-dim); border: 1px solid var(--green); }
+.dot-wrong { background: var(--red-dim); border: 1px solid var(--red); }
+.dot-current { background: var(--blue-dim); border: 1px solid var(--blue); }
