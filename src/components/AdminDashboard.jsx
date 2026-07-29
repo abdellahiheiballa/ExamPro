@@ -29,107 +29,6 @@ import {
 import './AdminDashboard.css';
 
 const translations = {
-  en: {
-    dashboard: 'Admin Dashboard',
-    welcome: 'Welcome, {name}. Manage the academy from this modular workspace.',
-    overview: 'Overview',
-    classes: 'Classes',
-    exams: 'Exams',
-    users: 'Users',
-    questions: 'Questions',
-    monitoring: 'Monitoring',
-    reports: 'Reports',
-    audit: 'Audit',
-    overviewSummary: 'Overview',
-    createClass: 'Create Class',
-    createExam: 'Create Exam',
-    createUser: 'Create User',
-    questionBank: 'Question Bank',
-    noActiveSessions: 'No active sessions.',
-    noReports: 'No reports available yet.',
-    completedSessions: 'Completed sessions',
-    passRate: 'Pass rate',
-    auditHint: 'Select a session to inspect its logs and incidents.',
-    createClassBtn: 'Create Class',
-    classList: 'Classes',
-    createExamBtn: 'Create Exam',
-    examList: 'Exams',
-    createUserBtn: 'Create User',
-    userList: 'Users',
-    bulkImport: 'Bulk Import Candidates',
-    questionList: 'Questions',
-    addQuestion: 'Add Question',
-    noClasses: 'No classes created yet.',
-    noExams: 'No exams created yet.',
-    noUsers: 'No users created yet.',
-    noQuestions: 'No questions created yet.',
-    noDescription: 'No description',
-    name: 'Name',
-    description: 'Description',
-    title: 'Title',
-    classLabel: 'Class',
-    selectClass: 'Select class',
-    scheduledDate: 'Scheduled Date',
-    durationMinutes: 'Duration (minutes)',
-    examText: 'Exam Text',
-    examTextPlaceholder: 'Paste question text here...',
-    instructions: 'Instructions',
-    instructionsPlaceholder: 'Exam instructions...',
-    username: 'Username',
-    password: 'Password',
-    role: 'Role',
-    student: 'Student',
-    teacher: 'Teacher',
-    admin: 'Admin',
-    studentId: 'Student ID',
-    department: 'Department',
-    nationalId: 'National ID',
-    email: 'Email',
-    phone: 'Phone',
-    photoUrl: 'Photo URL',
-    active: 'Active',
-    csv: 'CSV',
-    importUsers: 'Import Users',
-    resetPassword: 'Reset Password',
-    questionText: 'Question text',
-    questionType: 'Question type',
-    multipleChoice: 'Multiple choice',
-    essay: 'Essay',
-    options: 'Options (one per line, e.g. a. Option A)',
-    correctKeys: 'Correct keys (comma separated)',
-    marks: 'Marks',
-    difficulty: 'Difficulty',
-    easy: 'Easy',
-    medium: 'Medium',
-    hard: 'Hard',
-    topic: 'Topic',
-    explanation: 'Explanation',
-    timeEstimate: 'Time estimate (minutes)',
-    tags: 'Tags',
-    category: 'Category',
-    attachments: 'Attachments (one per line)',
-    tagsPlaceholder: 'comma separated',
-    assignStudent: 'Assign student',
-    selectStudent: 'Select student',
-    assignBtn: 'Assign',
-    members: 'Members',
-    noStudentsAssigned: 'No students assigned.',
-    noId: 'no ID',
-    general: 'General',
-    actions: 'Actions',
-    yes: 'Yes',
-    no: 'No',
-    duration: 'Duration',
-    minutes: 'min',
-    status: 'Status',
-    timeLeft: 'Time Left',
-    progress: 'Progress',
-    logs: 'Logs',
-    incidents: 'Incidents',
-    sessionId: 'Session ID',
-    loadSessionLogs: 'Load session logs',
-    logout: 'Logout',
-  },
   ar: {
     dashboard: 'لوحة الإدارة',
     welcome: 'مرحبًا، {name}. أدر الأكاديمية من هذه المساحة المعيارية.',
@@ -395,7 +294,7 @@ export default function AdminDashboard({ token, user, onLogout }) {
   const [questionTopic, setQuestionTopic] = useState('General');
   const [questionExplanation, setQuestionExplanation] = useState('');
   const [activePage, setActivePage] = useState('overview');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState('ar');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -627,7 +526,7 @@ export default function AdminDashboard({ token, user, onLogout }) {
     }
   };
 
-  const t = translations[language] || translations.en;
+  const t = translations[language] || translations.ar;
 
   const renderPage = () => {
     switch (activePage) {
@@ -659,7 +558,6 @@ export default function AdminDashboard({ token, user, onLogout }) {
         </div>
         <div className="admin-header-actions">
           <select value={language} onChange={(e) => setLanguage(e.target.value)} className="language-switcher">
-            <option value="en">English</option>
             <option value="ar">العربية</option>
             <option value="fr">Français</option>
           </select>
