@@ -9,6 +9,7 @@ export default function QuestionNav({
   correctAnswers,
   getQuestionStatus,
   onGo,
+  flaggedQuestions = [],
 }) {
   return (
     <div className="qnav">
@@ -20,6 +21,7 @@ export default function QuestionNav({
           const isCurrent = i === currentIdx;
 
           let cls = 'qnav-btn';
+          if (flaggedQuestions.includes(q.id)) cls += ' flagged';
           if (isCurrent) cls += ' current';
           if (answered && status === 'correct') cls += ' nav-correct';
           else if (answered && status === 'wrong') cls += ' nav-wrong';

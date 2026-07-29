@@ -20,6 +20,7 @@ export function parseQuestions(rawText) {
 
   const optionRegex = /^\s*([a-e])\s*[.)]\s*(.*)/i;
   const questionHeaderRegex = /^Question\s+(\d+)\s*$/i;
+  const typeRegex = /^\s*Type\s*:\s*(.+)$/i;
 
   const flush = () => {
     if (current) {
@@ -49,6 +50,8 @@ export function parseQuestions(rawText) {
         scenario: '',
         question: '',
         options: {},
+        type: 'multiple_choice',
+        marks: 1,
       };
       currentOptionKey = null;
       inScenario = false;
@@ -84,6 +87,13 @@ export function parseQuestions(rawText) {
       currentOptionKey = null;
       const afterColon = trimmed.replace(/^Question\s*:\s*/i, '');
       if (afterColon) current.question += afterColon + ' ';
+      continue;
+    }
+
+    const typeMatch = trimmed.match(typeRegex);
+    if (typeMatch) {
+      const normalizedType = typeMatch[1].trim().toLowerCase();
+      current.type = normalizedType.includes('essay') ? 'essay' : 'multiple_choice';
       continue;
     }
 
@@ -156,22 +166,35 @@ export function parseQuestions(rawText) {
  * Min 0, Max 1.00
  */
 export function computeQuestionScore(question, selectedKeys, correctKeys) {
-  if (!correctKeys || correctKeys.length === 0) return { score: 0, max: 1 };
+  const maxMarks = Number(question?.marks) || 1;
+  const selected = Array.isArray(selectedKeys) ? selectedKeys : [];
+  const correct = Array.isArray(correctKeys) ? correctKeys : [];
 
-  const allKeys = Object.keys(question.options);
+  if (question?.type === 'essay') {
+    return {
+      score: selected.length > 0 && typeof selectedKeys === 'string' && selectedKeys.trim() ? maxMarks : 0,
+      max: maxMarks,
+    };
+  }
+
+  if (!correct || correct.length === 0) return { score: 0, max: maxMarks };
+
+  const allKeys = Object.keys(question.options || {});
   let score = 0;
+  const perCorrectMark = maxMarks / Math.max(correct.length, 1);
+  const perWrongPenalty = maxMarks / Math.max(allKeys.length || 1, 1) * 0.25;
 
   allKeys.forEach(key => {
-    const isCorrect = correctKeys.includes(key);
-    const isSelected = selectedKeys.includes(key);
+    const isCorrect = correct.includes(key);
+    const isSelected = selected.includes(key);
 
-    if (isCorrect && isSelected) score += 0.20;
-    else if (!isCorrect && isSelected) score -= 0.05;
+    if (isCorrect && isSelected) score += perCorrectMark;
+    else if (!isCorrect && isSelected) score -= perWrongPenalty;
   });
 
   return {
-    score: Math.max(0, Math.min(1, parseFloat(score.toFixed(4)))),
-    max: 1.0,
+    score: Math.max(0, Math.min(maxMarks, parseFloat(score.toFixed(4)))),
+    max: maxMarks,
   };
 }
 

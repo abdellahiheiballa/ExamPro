@@ -28,6 +28,9 @@ export default function TestInterface({
   finishedAt,
 }) {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState([]);
+  const [accessibility, setAccessibility] = useState({ fontScale: 1, highContrast: false });
+  const [darkMode, setDarkMode] = useState(false);
 
   const q = questions[currentIdx];
   if (!q) return null;
@@ -42,8 +45,14 @@ export default function TestInterface({
 
   const progressPct = ((currentIdx + 1) / questions.length) * 100;
 
+  const toggleFlag = () => {
+    setFlaggedQuestions(prev => prev.includes(q.id) ? prev.filter(id => id !== q.id) : [...prev, q.id]);
+  };
+
+  const rootClass = `test-layout ${darkMode ? 'theme-dark' : 'theme-light'}`;
+
   return (
-    <div className="test-layout">
+    <div className={rootClass}>
       {/* Top bar */}
       <header className="test-topbar">
         <div className="topbar-left">
@@ -74,6 +83,18 @@ export default function TestInterface({
             title={t('test.toggleAnswersTitle')}
           >
             {showCheat ? '🙈' : '👁'}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={toggleFlag}>
+            {flaggedQuestions.includes(q.id) ? '★' : '☆'}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setDarkMode(v => !v)}>
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setAccessibility(a => ({ ...a, fontScale: a.fontScale >= 1.2 ? 1 : 1.2 }))}>
+            A+
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setAccessibility(a => ({ ...a, highContrast: !a.highContrast }))}>
+            {accessibility.highContrast ? 'High' : 'Low'}
           </button>
           <Timer timeLeft={timeLeft} totalTime={totalTime} />
           <button
@@ -113,7 +134,7 @@ export default function TestInterface({
 
       <div className="test-body">
         {/* Left nav */}
-        <aside className="test-nav">
+        <aside className="test-nav" style={{ fontSize: `${accessibility.fontScale}rem`, ...(accessibility.highContrast ? { background: 'var(--surface2)' } : {}) }}>
           <QuestionNav
             questions={questions}
             currentIdx={currentIdx}
@@ -121,11 +142,13 @@ export default function TestInterface({
             correctAnswers={correctAnswers}
             getQuestionStatus={getQuestionStatus}
             onGo={handleNav}
+            flaggedQuestions={flaggedQuestions}
           />
         </aside>
 
         {/* Main content */}
         <main className="test-main">
+          <div style={{ fontSize: `${accessibility.fontScale}rem` }}>
           <QuestionCard
             key={q.id}
             question={q}
@@ -137,6 +160,7 @@ export default function TestInterface({
             reviewMode={reviewMode}
             questionScore={score}
           />
+          </div>
 
           {/* Prev / Next */}
           <div className="question-nav-btns">

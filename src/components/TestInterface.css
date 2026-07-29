@@ -3,6 +3,34 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.theme-dark {
+  --bg: #0f172a;
+  --bg2: #111827;
+  --bg3: #1f2937;
+  --surface: #111827;
+  --surface2: #1f2937;
+  --border: #334155;
+  --border2: #475569;
+  --text: #f8fafc;
+  --text2: #cbd5e1;
+  --text3: #94a3b8;
+}
+
+.theme-light {
+  --bg: #fefefe;
+  --bg2: #eef4ff;
+  --bg3: #e4ecff;
+  --surface: #ffffff;
+  --surface2: #f6f9ff;
+  --border: #d8e2f3;
+  --border2: #c5d2ea;
+  --text: #04305f;
+  --text2: #475569;
+  --text3: #64748b;
 }
 
 /* Top bar */

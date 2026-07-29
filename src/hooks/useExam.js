@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { parseQuestions, computeQuestionScore } from '../utils/parser';
-import { createExamSession, saveExamSession } from '../api';
+import { createExamSession, saveExamSession, logExamEvent } from '../api';
 import { t } from '../i18n';
 
 const STORAGE_KEY = 'exam_session_v2';
@@ -23,6 +23,8 @@ export function useExam(token) {
   const [cheatRevealedFor, setCheatRevealedFor] = useState({}); // track what was revealed
 
   const timerRef = useRef(null);
+  const warningLoggedRef = useRef(false);
+  const visibilityRef = useRef(false);
 
   // Restore session
   useEffect(() => {
@@ -73,6 +75,15 @@ export function useExam(token) {
     return () => clearInterval(timerRef.current);
   }, [phase]);
 
+  const logEvent = useCallback(async (eventType, payload = {}) => {
+    if (!token || !sessionId) return;
+    try {
+      await logExamEvent({ token, sessionId, eventType, payload });
+    } catch (err) {
+      console.error('Failed to log exam event', err);
+    }
+  }, [token, sessionId]);
+
   const saveCurrentSession = useCallback(async (payload = {}) => {
     if (!token || !sessionId) return;
     try {
@@ -84,10 +95,13 @@ export function useExam(token) {
         answers: payload.answers ?? answers,
         status: payload.status,
       });
+      if (payload.status === 'completed') {
+        await logEvent('submission', { completedAt: new Date().toISOString() });
+      }
     } catch (err) {
       console.error('Failed to save exam session', err);
     }
-  }, [token, sessionId, timeLeft, currentIdx, answers]);
+  }, [token, sessionId, timeLeft, currentIdx, answers, logEvent]);
 
   const startTest = useCallback(async (newExamId, text, durationMinutes = 90) => {
     const parsed = parseQuestions(text);
@@ -122,8 +136,9 @@ export function useExam(token) {
     setFinishedAt(null);
     setPhase('test');
     setReviewMode(false);
+    await logEvent('exam_start', { examId: newExamId, startedAt: new Date().toISOString() });
     return {};
-  }, [token]);
+  }, [token, logEvent]);
 
   const toggleAnswer = useCallback((questionId, optionKey) => {
     setAnswers(prev => {
@@ -136,9 +151,10 @@ export function useExam(token) {
           : [...current, optionKey],
       };
       saveCurrentSession({ answers: next, currentQuestion: currentIdx, timeLeft });
+      void logEvent('answer_changed', { questionId, optionKey, answered: next[questionId] || [] });
       return next;
     });
-  }, [currentIdx, saveCurrentSession, timeLeft]);
+  }, [currentIdx, saveCurrentSession, timeLeft, logEvent]);
 
   const setCorrectForQuestion = useCallback((questionId, keys) => {
     setCorrectAnswers(prev => ({ ...prev, [questionId]: keys }));
@@ -149,7 +165,8 @@ export function useExam(token) {
     setFinishedAt(Date.now());
     setPhase('results');
     await saveCurrentSession({ status: 'completed', timeLeft: 0, currentQuestion: currentIdx });
-  }, [currentIdx, saveCurrentSession]);
+    await logEvent('submission', { completedAt: new Date().toISOString() });
+  }, [currentIdx, saveCurrentSession, logEvent]);
 
   const resetTest = useCallback(() => {
     clearInterval(timerRef.current);
@@ -170,7 +187,8 @@ export function useExam(token) {
 
   const goToQuestion = useCallback((idx) => {
     setCurrentIdx(Math.max(0, Math.min(idx, questions.length - 1)));
-  }, [questions.length]);
+    void logEvent('question_viewed', { questionIndex: idx });
+  }, [questions.length, logEvent]);
 
   // Scoring helpers
   const getQuestionScore = useCallback((questionId) => {
@@ -198,6 +216,42 @@ export function useExam(token) {
   const revealCheat = useCallback((questionId) => {
     setCheatRevealedFor(prev => ({ ...prev, [questionId]: true }));
   }, []);
+
+  useEffect(() => {
+    if (phase !== 'test' || !token || !sessionId) return;
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden' && !visibilityRef.current) {
+        visibilityRef.current = true;
+        void logEvent('tab_blur', { visibilityState: document.visibilityState });
+      } else if (document.visibilityState === 'visible' && visibilityRef.current) {
+        visibilityRef.current = false;
+        void logEvent('reconnect', { visibilityState: document.visibilityState });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('beforeunload', () => {
+      void logEvent('logout', { reason: 'page_close' });
+    });
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('beforeunload', () => {
+        void logEvent('logout', { reason: 'page_close' });
+      });
+    };
+  }, [phase, token, sessionId, logEvent]);
+
+  useEffect(() => {
+    if (phase !== 'test' || !token || !sessionId) return;
+    if (timeLeft <= 0) return;
+    if (warningLoggedRef.current) return;
+    if (timeLeft <= 60) {
+      warningLoggedRef.current = true;
+      void logEvent('timer_warning', { timeLeft });
+    }
+  }, [phase, sessionId, timeLeft, token, logEvent]);
 
   const elapsedSeconds = startedAt
     ? (finishedAt ? Math.floor((finishedAt - startedAt) / 1000) : totalTime - timeLeft)

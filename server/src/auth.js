@@ -5,10 +5,10 @@ import { query } from './db.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'exampro-secret';
 const JWT_EXPIRY = '8h';
 
-export async function createUser({ username, password, studentId, role = 'student', department = null, isActive = true, mustChangePassword = false }) {
+export async function createUser({ username, password, studentId, role = 'student', department = null, isActive = true, mustChangePassword = false, nationalId = null, email = null, phone = null, photoUrl = null }) {
   const password_hash = await bcrypt.hash(password, 10);
-  const text = `INSERT INTO users (username, password_hash, student_id, role, department, is_active, must_change_password) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, student_id, role, department, is_active, must_change_password`;
-  const values = [username, password_hash, studentId, role, department, isActive, mustChangePassword];
+  const text = `INSERT INTO users (username, password_hash, student_id, role, department, is_active, must_change_password, national_id, email, phone, photo_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, username, student_id, role, department, is_active, must_change_password, national_id, email, phone, photo_url`;
+  const values = [username, password_hash, studentId, role, department, isActive, mustChangePassword, nationalId, email, phone, photoUrl];
   const res = await query(text, values);
   return res.rows[0];
 }

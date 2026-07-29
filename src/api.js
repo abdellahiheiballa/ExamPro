@@ -31,19 +31,19 @@ export async function fetchAdminUsers({ token }) {
   });
 }
 
-export async function createAdminUser({ token, username, password, studentId, role, department, isActive }) {
+export async function createAdminUser({ token, username, password, studentId, role, department, isActive, nationalId, email, phone, photoUrl }) {
   return request('/api/admin/users', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ username, password, studentId, role, department, isActive }),
+    body: JSON.stringify({ username, password, studentId, role, department, isActive, nationalId, email, phone, photoUrl }),
   });
 }
 
-export async function updateAdminUser({ token, userId, username, studentId, role, department, isActive }) {
+export async function updateAdminUser({ token, userId, username, studentId, role, department, isActive, nationalId, email, phone, photoUrl }) {
   return request(`/api/admin/users/${userId}`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ username, studentId, role, department, isActive }),
+    body: JSON.stringify({ username, studentId, role, department, isActive, nationalId, email, phone, photoUrl }),
   });
 }
 
@@ -68,11 +68,11 @@ export async function fetchAdminQuestions({ token }) {
   });
 }
 
-export async function createAdminQuestion({ token, text, options, correctKeys, marks, difficulty, topic, explanation }) {
+export async function createAdminQuestion({ token, text, options, correctKeys, marks, difficulty, topic, explanation, questionType, timeEstimate, tags, category, attachments }) {
   return request('/api/admin/questions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ text, options, correctKeys, marks, difficulty, topic, explanation }),
+    body: JSON.stringify({ text, options, correctKeys, marks, difficulty, topic, explanation, questionType, timeEstimate, tags, category, attachments }),
   });
 }
 
@@ -136,6 +136,12 @@ export async function fetchExamSessions({ token, examId }) {
   });
 }
 
+export async function fetchExamSessionLogs({ token, sessionId }) {
+  return request(`/api/admin/exam-sessions/${sessionId}/logs`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export async function createExamSession({ token, examId, timeLeft, currentQuestion, answers }) {
   return request('/api/exam-sessions', {
     method: 'POST',
@@ -149,6 +155,14 @@ export async function saveExamSession({ token, sessionId, timeLeft, currentQuest
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ timeLeft, currentQuestion, answers, status }),
+  });
+}
+
+export async function logExamEvent({ token, sessionId, eventType, payload }) {
+  return request(`/api/exam-sessions/${sessionId}/log`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ eventType, payload }),
   });
 }
 

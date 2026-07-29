@@ -25,8 +25,11 @@ export default function QuestionCard({
     onSetCorrect(question.id, updated);
   };
 
-  const options = Object.entries(question.options);
-  const answered = selectedKeys.length > 0;
+  const options = Object.entries(question.options || {});
+  const answered = question?.type === 'essay'
+    ? (Array.isArray(selectedKeys) ? selectedKeys.join('').trim().length > 0 : Boolean(selectedKeys))
+    : selectedKeys.length > 0;
+  const isEssay = question?.type === 'essay';
 
   return (
     <div className="qcard animate-in">
@@ -56,9 +59,22 @@ export default function QuestionCard({
         <div className="qcard-question">{question.question}</div>
       )}
 
-      {/* Options */}
+      {/* Options or essay input */}
       <div className="qcard-options">
-        {options.map(([key, text]) => {
+        {isEssay ? (
+          <label className="essay-input-wrap">
+            <span className="essay-label">Essay response</span>
+            <textarea
+              className="essay-response"
+              value={Array.isArray(selectedKeys) ? selectedKeys.join('\n') : selectedKeys || ''}
+              onChange={(e) => !reviewMode && onToggle(question.id, e.target.value)}
+              rows={8}
+              placeholder="Type your essay response here..."
+              disabled={reviewMode}
+            />
+          </label>
+        ) : (
+          options.map(([key, text]) => {
           const isSelected = selectedKeys.includes(key);
           const isCorrect = (correctKeys || []).includes(key);
           const isCheatCorrect = isRevealed && localCorrect.includes(key);
@@ -100,7 +116,8 @@ export default function QuestionCard({
               )}
             </label>
           );
-        })}
+        })
+        )}
       </div>
 
       {/* Cheat section */}

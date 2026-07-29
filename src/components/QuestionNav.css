@@ -74,6 +74,11 @@
   color: var(--orange);
 }
 
+.qnav-btn.flagged {
+  border-color: var(--orange);
+  box-shadow: inset 0 0 0 1px var(--orange);
+}
+
 .qnav-legend {
   display: flex;
   flex-direction: column;

@@ -96,15 +96,15 @@ app.post('/api/admin/classes', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
-  const result = await query('SELECT id, username, student_id, role, is_active, department, created_at FROM users ORDER BY created_at DESC');
+  const result = await query('SELECT id, username, student_id, role, is_active, department, national_id, email, phone, photo_url, created_at FROM users ORDER BY created_at DESC');
   res.json({ users: result.rows });
 });
 
 app.post('/api/admin/users', requireAdmin, async (req, res) => {
-  const { username, password, studentId, role, department, isActive } = req.body;
+  const { username, password, studentId, role, department, isActive, nationalId, email, phone, photoUrl } = req.body;
   if (!username || !password || !role) return res.status(400).json({ error: 'Missing required user fields' });
   try {
-    const user = await createUser({ username, password, studentId, role, department, isActive });
+    const user = await createUser({ username, password, studentId, role, department, isActive, nationalId, email, phone, photoUrl });
     res.json({ user });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -113,10 +113,10 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
 
 app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
   const { userId } = req.params;
-  const { username, studentId, role, department, isActive } = req.body;
+  const { username, studentId, role, department, isActive, nationalId, email, phone, photoUrl } = req.body;
   const result = await query(
-    'UPDATE users SET username = COALESCE($1, username), student_id = COALESCE($2, student_id), role = COALESCE($3, role), department = COALESCE($4, department), is_active = COALESCE($5, is_active) WHERE id = $6 RETURNING id, username, student_id, role, is_active, department',
-    [username, studentId, role, department, isActive, userId]
+    'UPDATE users SET username = COALESCE($1, username), student_id = COALESCE($2, student_id), role = COALESCE($3, role), department = COALESCE($4, department), is_active = COALESCE($5, is_active), national_id = COALESCE($6, national_id), email = COALESCE($7, email), phone = COALESCE($8, phone), photo_url = COALESCE($9, photo_url) WHERE id = $10 RETURNING id, username, student_id, role, is_active, department, national_id, email, phone, photo_url',
+    [username, studentId, role, department, isActive, nationalId, email, phone, photoUrl, userId]
   );
   res.json({ user: result.rows[0] });
 });
@@ -227,6 +227,13 @@ app.get('/api/admin/exam-sessions', requireAdmin, async (req, res) => {
      ORDER BY s.created_at DESC`
   );
   res.json({ sessions: sessions.rows });
+});
+
+app.get('/api/admin/exam-sessions/:sessionId/logs', requireAdmin, async (req, res) => {
+  const { sessionId } = req.params;
+  const logs = await query('SELECT * FROM exam_logs WHERE exam_session_id = $1 ORDER BY created_at DESC', [sessionId]);
+  const incidents = await query('SELECT * FROM reports WHERE exam_session_id = $1 ORDER BY created_at DESC', [sessionId]);
+  res.json({ logs: logs.rows, incidents: incidents.rows });
 });
 
 app.post('/api/exam-sessions/:sessionId/pause', requireAdmin, async (req, res) => {
