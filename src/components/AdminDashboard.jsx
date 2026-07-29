@@ -553,8 +553,8 @@ export default function AdminDashboard({ token, user, onLogout }) {
     <div className="admin-dashboard">
       <div className="admin-header">
         <div>
-          <h1>{t.dashboard}</h1>
-          <p>{t.welcome.replace('{name}', user.username)}</p>
+          <h1>{t['admin.dashboard'] || t.dashboard}</h1>
+          <p>{t['admin.welcome'] ? t['admin.welcome'].replace('{name}', user.username) : t.welcome.replace('{name}', user.username)}</p>
         </div>
         <div className="admin-header-actions">
           <select value={language} onChange={(e) => setLanguage(e.target.value)} className="language-switcher">

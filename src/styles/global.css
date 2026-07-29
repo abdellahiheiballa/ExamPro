@@ -174,3 +174,38 @@ textarea { font-family: inherit; }
     font-size: 12px;
   }
 }
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-bottom: 72px;
+}
+
+.app-body {
+  flex: 1;
+}
+
+.app-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 700px) {
+  .app-footer {
+    justify-content: center;
+    padding: 10px 16px;
+  }
+}

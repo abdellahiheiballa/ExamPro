@@ -21,11 +21,11 @@ export default function LoginScreen({ onLogin }) {
       const data = await login({ username, password });
       const isAdminRole = data.user.role === 'admin' || data.user.role === 'teacher';
       if (mode === 'admin' && !isAdminRole) {
-        setError('Please use admin credentials or switch to student login.');
+        setError(t('login.error.adminRole'));
         return;
       }
       if (mode === 'student' && isAdminRole) {
-        setError('Please use the admin login tab for administrator access.');
+        setError(t('login.error.studentRole'));
         return;
       }
       onLogin(data);
@@ -52,7 +52,7 @@ export default function LoginScreen({ onLogin }) {
               setError('');
             }}
           >
-            Student Login
+            {t('login.mode.student')}
           </button>
           <button
             type="button"
@@ -62,20 +62,20 @@ export default function LoginScreen({ onLogin }) {
               setError('');
             }}
           >
-            Admin Login
+            {t('login.mode.admin')}
           </button>
         </div>
 
-        <h1>{mode === 'admin' ? 'Admin Login' : 'Student Login'}</h1>
+        <h1>{mode === 'admin' ? t('login.title.admin') : t('login.title.student')}</h1>
         <p className="login-subtitle">
           {mode === 'admin'
-            ? 'Use your administrator credentials to manage exams and users.'
-            : 'Use your student credentials to view and take exams.'}
+            ? t('login.subtitle.admin')
+            : t('login.subtitle.student')}
         </p>
 
         <form onSubmit={handleSubmit}>
           <label>
-            {mode === 'student' ? 'Username or Student ID' : t('login.username')}
+            {mode === 'student' ? t('login.usernameOrStudentId') : t('login.username')}
             <input value={username} onChange={(e) => setUsername(e.target.value)} required />
           </label>
           <label>
@@ -84,7 +84,7 @@ export default function LoginScreen({ onLogin }) {
           </label>
           {error && <div className="login-error">{error}</div>}
           <button type="submit" className="btn btn-primary">
-            {mode === 'admin' ? 'Login as Admin' : 'Login as Student'}
+            {mode === 'admin' ? t('login.button.admin') : t('login.button.student')}
           </button>
         </form>
       </div>

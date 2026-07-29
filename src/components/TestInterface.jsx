@@ -168,13 +168,14 @@ export default function TestInterface({
               className="btn btn-ghost"
               disabled={currentIdx === 0}
               onClick={() => goToQuestion(currentIdx - 1)}
+              aria-label="Previous question"
             >
-              {t('test.previous')}
+              ← {t('test.previous')}
             </button>
             <span className="nav-indicator">{currentIdx + 1} / {questions.length}</span>
             {currentIdx < questions.length - 1 ? (
-              <button className="btn btn-secondary" onClick={() => goToQuestion(currentIdx + 1)}>
-                {t('test.next')}
+              <button className="btn btn-secondary" onClick={() => goToQuestion(currentIdx + 1)} aria-label="Next question">
+                {t('test.next')} →
               </button>
             ) : (
               <button className="btn btn-primary" onClick={() => setShowSubmitConfirm(true)}>

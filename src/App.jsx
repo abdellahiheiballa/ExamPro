@@ -8,6 +8,8 @@ import LoginScreen from './components/LoginScreen';
 import AdminDashboard from './components/AdminDashboard';
 import StudentDashboard from './components/StudentDashboard';
 
+const AUTH_STORAGE_KEY = 'exam_app_auth_v1';
+
 export default function App() {
   const [token, setToken] = useState(null);
   const exam = useExam(token);
@@ -16,9 +18,30 @@ export default function App() {
   const [selectedExam, setSelectedExam] = useState(null);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.token && parsed?.user) {
+          setToken(parsed.token);
+          setUser(parsed.user);
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
   }, [locale]);
+
+  useEffect(() => {
+    if (!token || !user) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, user }));
+  }, [token, user]);
 
   const handleLocaleChange = (newLocale) => {
     setLocale(newLocale);
@@ -34,6 +57,7 @@ export default function App() {
     setToken(null);
     setUser(null);
     setSelectedExam(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   const handleStartExam = async (selectedExam) => {
@@ -54,7 +78,7 @@ export default function App() {
 
     if (user.role === 'student') {
       if (exam.phase === 'start') {
-        return <StudentDashboard token={token} user={user} onStartExam={handleStartExam} />;
+        return <StudentDashboard token={token} user={user} onStartExam={handleStartExam} onLogout={handleLogout} />;
       }
       if (exam.phase === 'test') {
         return (
@@ -141,7 +165,14 @@ export default function App() {
           </button>
         ))}
       </div>
-      {renderContent()}
+      <div className="app-body">{renderContent()}</div>
+      {user && user.role !== 'student' && (
+        <footer className="app-footer">
+          <button className="btn btn-secondary" type="button" onClick={handleLogout}>
+            {t('app.logout')}
+          </button>
+        </footer>
+      )}
     </div>
   );
 }

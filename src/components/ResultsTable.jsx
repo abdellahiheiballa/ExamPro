@@ -183,12 +183,12 @@ export default function ResultsTable({
                   questionScore={getQuestionScore(questions[reviewIdx].id)}
                 />
                 <div className="review-nav-btns">
-                  <button className="btn btn-ghost" disabled={reviewIdx === 0} onClick={() => setReviewIdx(reviewIdx - 1)}>
-                    {t('test.previous')}
+                  <button className="btn btn-ghost" disabled={reviewIdx === 0} onClick={() => setReviewIdx(reviewIdx - 1)} aria-label="Previous review item">
+                    ← {t('test.previous')}
                   </button>
                   <span className="nav-indicator">{reviewIdx + 1} / {questions.length}</span>
-                  <button className="btn btn-secondary" disabled={reviewIdx === questions.length - 1} onClick={() => setReviewIdx(reviewIdx + 1)}>
-                    {t('test.next')}
+                  <button className="btn btn-secondary" disabled={reviewIdx === questions.length - 1} onClick={() => setReviewIdx(reviewIdx + 1)} aria-label="Next review item">
+                    {t('test.next')} →
                   </button>
                 </div>
               </>

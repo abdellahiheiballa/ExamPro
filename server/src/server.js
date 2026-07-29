@@ -9,6 +9,26 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+async function ensureSchema() {
+  const migrations = [
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS national_id TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT`,
+    `ALTER TABLE questions ADD COLUMN IF NOT EXISTS question_type TEXT NOT NULL DEFAULT 'multiple_choice'`,
+    `ALTER TABLE questions ADD COLUMN IF NOT EXISTS time_estimate INTEGER`,
+    `ALTER TABLE questions ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+    `ALTER TABLE questions ADD COLUMN IF NOT EXISTS category TEXT`,
+    `ALTER TABLE questions ADD COLUMN IF NOT EXISTS attachments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+  ];
+
+  for (const migration of migrations) {
+    await query(migration);
+  }
+}
+
+await ensureSchema();
+
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({ error: 'Invalid JSON payload' });
