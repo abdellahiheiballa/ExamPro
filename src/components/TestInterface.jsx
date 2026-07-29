@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { t } from '../i18n';
+import logo from '../assets/logo.jpeg';
 import Timer from './Timer';
 import QuestionCard from './QuestionCard';
 import QuestionNav from './QuestionNav';
@@ -46,7 +48,7 @@ export default function TestInterface({
       <header className="test-topbar">
         <div className="topbar-left">
           <div className="logo-sm">
-            <span className="logo-icon-sm">⬡</span>
+            <img src={logo} alt="ExamPro" className="logo-image-sm" />
             <span className="logo-text-sm">ExamPro</span>
           </div>
           <div className="progress-pill">
@@ -61,7 +63,7 @@ export default function TestInterface({
             <div className="progress-bar-track">
               <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
             </div>
-            <span className="progress-label">{answeredCount} répondus · {unanswered} restants</span>
+            <span className="progress-label">{t('test.answeredRemaining', { answered: answeredCount, remaining: unanswered })}</span>
           </div>
         </div>
 
@@ -69,7 +71,7 @@ export default function TestInterface({
           <button
             className={`btn-cheat-toggle ${showCheat ? 'active' : ''}`}
             onClick={() => setShowCheat(!showCheat)}
-            title="Voir/Masquer toutes les réponses"
+            title={t('test.toggleAnswersTitle')}
           >
             {showCheat ? '🙈' : '👁'}
           </button>
@@ -78,10 +80,10 @@ export default function TestInterface({
             className="btn btn-danger btn-sm"
             onClick={() => setShowSubmitConfirm(true)}
           >
-            Terminer
+            {t('test.finish')}
           </button>
           <button className="btn btn-ghost btn-sm" onClick={resetTest}>
-            Réinitialiser
+            {t('test.reset')}
           </button>
         </div>
       </header>
@@ -90,19 +92,19 @@ export default function TestInterface({
       {showSubmitConfirm && (
         <div className="modal-backdrop" onClick={() => setShowSubmitConfirm(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-title">Soumettre l'examen ?</div>
+            <div className="modal-title">{t('test.submitConfirmTitle')}</div>
             <div className="modal-body">
               {unanswered > 0 && (
                 <div className="modal-warn">
-                  ⚠ {unanswered} question{unanswered > 1 ? 's' : ''} sans réponse.
+                  {t('test.unansweredWarning', { count: unanswered })}
                 </div>
               )}
-              <p>Cette action est irréversible. Vos réponses seront soumises et notées.</p>
+              <p>{t('test.irreversible')}</p>
             </div>
             <div className="modal-actions">
-              <button className="btn btn-ghost" onClick={() => setShowSubmitConfirm(false)}>Annuler</button>
+              <button className="btn btn-ghost" onClick={() => setShowSubmitConfirm(false)}>{t('test.cancel')}</button>
               <button className="btn btn-primary" onClick={() => { setShowSubmitConfirm(false); handleSubmit(); }}>
-                Confirmer
+                {t('test.confirm')}
               </button>
             </div>
           </div>
@@ -142,16 +144,16 @@ export default function TestInterface({
               disabled={currentIdx === 0}
               onClick={() => goToQuestion(currentIdx - 1)}
             >
-              ← Précédent
+              {t('test.previous')}
             </button>
             <span className="nav-indicator">{currentIdx + 1} / {questions.length}</span>
             {currentIdx < questions.length - 1 ? (
               <button className="btn btn-secondary" onClick={() => goToQuestion(currentIdx + 1)}>
-                Suivant →
+                {t('test.next')}
               </button>
             ) : (
               <button className="btn btn-primary" onClick={() => setShowSubmitConfirm(true)}>
-                Terminer l'examen ✓
+                {t('test.finishExam')}
               </button>
             )}
           </div>

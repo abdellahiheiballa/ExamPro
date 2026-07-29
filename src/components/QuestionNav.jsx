@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '../i18n';
 import './QuestionNav.css';
 
 export default function QuestionNav({
@@ -11,7 +12,7 @@ export default function QuestionNav({
 }) {
   return (
     <div className="qnav">
-      <div className="qnav-title">Navigation</div>
+      <div className="qnav-title">{t('navbar.title')}</div>
       <div className="qnav-grid">
         {questions.map((q, i) => {
           const answered = (answers[q.id] || []).length > 0;
@@ -33,10 +34,10 @@ export default function QuestionNav({
         })}
       </div>
       <div className="qnav-legend">
-        <div className="leg-row"><span className="leg-dot dot-answered" />Répondu</div>
-        <div className="leg-row"><span className="leg-dot dot-correct" />Correct</div>
-        <div className="leg-row"><span className="leg-dot dot-wrong" />Incorrect</div>
-        <div className="leg-row"><span className="leg-dot dot-current" />Actuel</div>
+        <div className="leg-row"><span className="leg-dot dot-answered" />{t('navbar.legend.answered')}</div>
+        <div className="leg-row"><span className="leg-dot dot-correct" />{t('navbar.legend.correct')}</div>
+        <div className="leg-row"><span className="leg-dot dot-wrong" />{t('navbar.legend.wrong')}</div>
+        <div className="leg-row"><span className="leg-dot dot-current" />{t('navbar.legend.current')}</div>
       </div>
     </div>
   );

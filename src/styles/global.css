@@ -1,26 +1,26 @@
 :root {
-  --bg: #0a0e1a;
-  --bg2: #111827;
-  --bg3: #1a2235;
-  --surface: #151d2e;
-  --surface2: #1e2a40;
-  --border: #263045;
-  --border2: #2e3a52;
+  --bg: #fefefe;
+  --bg2: #eef4ff;
+  --bg3: #e4ecff;
+  --surface: #ffffff;
+  --surface2: #f6f9ff;
+  --border: #d8e2f3;
+  --border2: #c5d2ea;
 
-  --green: #00c896;
-  --green-dim: rgba(0,200,150,0.12);
-  --green-border: rgba(0,200,150,0.3);
-  --red: #ff4d6a;
-  --red-dim: rgba(255,77,106,0.12);
-  --red-border: rgba(255,77,106,0.3);
-  --orange: #ffaa44;
-  --orange-dim: rgba(255,170,68,0.12);
-  --blue: #4d9fff;
-  --blue-dim: rgba(77,159,255,0.12);
+  --green: #04305f;
+  --green-dim: rgba(4,48,95,0.12);
+  --green-border: rgba(4,48,95,0.3);
+  --red: #d4474f;
+  --red-dim: rgba(212,71,79,0.12);
+  --red-border: rgba(212,71,79,0.3);
+  --orange: #ff8c42;
+  --orange-dim: rgba(255,140,66,0.12);
+  --blue: #1d4ed8;
+  --blue-dim: rgba(29,78,216,0.12);
 
-  --text: #e8edf5;
-  --text2: #8a98b4;
-  --text3: #5a6680;
+  --text: #04305f;
+  --text2: #475569;
+  --text3: #64748b;
 
   --font-main: 'Sora', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -48,6 +48,23 @@ html, body, #root {
 
 button { cursor: pointer; font-family: inherit; }
 textarea { font-family: inherit; }
+
+.logo-image,
+.logo-image-sm {
+  display: inline-block;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.logo-image {
+  width: 42px;
+  height: 42px;
+}
+
+.logo-image-sm {
+  width: 24px;
+  height: 24px;
+}
 
 .btn {
   display: inline-flex;
@@ -103,4 +120,57 @@ textarea { font-family: inherit; }
 
 .animate-in {
   animation: fadeIn 0.3s ease forwards;
+}
+
+.app-language-switcher {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(254, 254, 254, 0.95);
+  border: 1px solid rgba(4, 48, 95, 0.12);
+  backdrop-filter: blur(10px);
+  color: var(--text2);
+  font-size: 13px;
+}
+
+.app-language-switcher span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+}
+
+.lang-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.lang-btn:hover {
+  border-color: var(--border2);
+}
+
+.lang-btn.active {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+
+@media (max-width: 600px) {
+  .app-language-switcher {
+    top: 8px;
+    right: 8px;
+    padding: 8px 10px;
+    gap: 6px;
+    font-size: 12px;
+  }
 }

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { getLocale, t } from '../i18n';
+import logo from '../assets/logo.jpeg';
 import { formatFr, formatDateTime, formatDuration } from '../utils/parser';
 import QuestionCard from './QuestionCard';
 import QuestionNav from './QuestionNav';
@@ -84,25 +86,27 @@ export default function ResultsTable({
 
   const hasCorrectKeys = Object.keys(correctAnswers).length > 0;
 
+  const locale = getLocale();
+
   return (
     <div className="results-screen">
       {/* Header */}
       <div className="results-topbar">
         <div className="logo-sm">
-          <span>⬡</span>
+          <img src={logo} alt="ExamPro" className="logo-image-sm" />
           <span className="logo-text-sm">ExamPro</span>
         </div>
         <div className="results-title-block">
-          <h1 className="results-heading">Résultats de l'examen</h1>
+          <h1 className="results-heading">{t('results.heading')}</h1>
         </div>
         <div className="topbar-actions">
           {reviewIdx !== null && (
             <button className="btn btn-ghost btn-sm" onClick={() => setReviewIdx(null)}>
-              ← Retour aux résultats
+              {t('results.reviewBack')}
             </button>
           )}
           <button className="btn btn-danger btn-sm" onClick={resetTest}>
-            Nouvel examen
+            {t('results.newExam')}
           </button>
         </div>
       </div>
@@ -122,27 +126,27 @@ export default function ResultsTable({
           <div className="score-stats">
             <div className="stat-card">
               <div className="stat-val" style={{ color: 'var(--green)' }}>{correctCount}</div>
-              <div className="stat-label">Correctes</div>
+              <div className="stat-label">{t('results.correct')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-val" style={{ color: 'var(--red)' }}>{wrongCount}</div>
-              <div className="stat-label">Incorrectes</div>
+              <div className="stat-label">{t('results.wrong')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-val" style={{ color: 'var(--orange)' }}>{partialCount}</div>
-              <div className="stat-label">Partielles</div>
+              <div className="stat-label">{t('results.partial')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-val">{answeredCount}</div>
-              <div className="stat-label">Répondues</div>
+              <div className="stat-label">{t('results.answered')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-val">{formatDuration(elapsedSeconds)}</div>
-              <div className="stat-label">Durée</div>
+              <div className="stat-label">{t('results.time')}</div>
             </div>
             <div className="stat-card">
               <div className="stat-val" style={{ color: scoreColor }}>{pct.toFixed(1)}%</div>
-              <div className="stat-label">Taux de réussite</div>
+              <div className="stat-label">{t('results.successRate')}</div>
             </div>
           </div>
         </div>
@@ -179,9 +183,13 @@ export default function ResultsTable({
                   questionScore={getQuestionScore(questions[reviewIdx].id)}
                 />
                 <div className="review-nav-btns">
-                  <button className="btn btn-ghost" disabled={reviewIdx === 0} onClick={() => setReviewIdx(reviewIdx - 1)}>← Précédent</button>
+                  <button className="btn btn-ghost" disabled={reviewIdx === 0} onClick={() => setReviewIdx(reviewIdx - 1)}>
+                    {t('test.previous')}
+                  </button>
                   <span className="nav-indicator">{reviewIdx + 1} / {questions.length}</span>
-                  <button className="btn btn-secondary" disabled={reviewIdx === questions.length - 1} onClick={() => setReviewIdx(reviewIdx + 1)}>Suivant →</button>
+                  <button className="btn btn-secondary" disabled={reviewIdx === questions.length - 1} onClick={() => setReviewIdx(reviewIdx + 1)}>
+                    {t('test.next')}
+                  </button>
                 </div>
               </>
             )}
@@ -192,7 +200,7 @@ export default function ResultsTable({
         <div className="results-body">
           {!hasCorrectKeys && (
             <div className="no-correct-notice">
-              ℹ Aucune réponse correcte n'a été définie. Utilisez le bouton "Voir les réponses" pendant le test pour définir les réponses correctes et obtenir un scoring détaillé.
+              {t('results.noCorrectKeys')}
             </div>
           )}
 
@@ -200,11 +208,11 @@ export default function ResultsTable({
             <table className="results-table">
               <thead>
                 <tr>
-                  <th className="th-status sticky-col">Statut</th>
-                  <th className="th-meta">Commencé</th>
-                  <th className="th-meta">Terminé</th>
-                  <th className="th-meta">Durée</th>
-                  <th className="th-score sticky-score">Note /{formatFr(maxScore)}</th>
+                  <th className="th-status sticky-col">{t('results.tableStatus')}</th>
+                  <th className="th-meta">{t('results.started')}</th>
+                  <th className="th-meta">{t('results.finished')}</th>
+                  <th className="th-meta">{t('results.duration')}</th>
+                  <th className="th-score sticky-score">{t('results.scoreMax', { max: formatFr(maxScore) })}</th>
                   {questions.map(q => (
                     <th key={q.id} className="th-q">
                       <div className="th-q-inner">
@@ -218,10 +226,10 @@ export default function ResultsTable({
               <tbody>
                 <tr className="results-row">
                   <td className="td-status sticky-col">
-                    <span className="badge-termine">Terminé</span>
+                    <span className="badge-termine">{t('results.completed')}</span>
                   </td>
-                  <td className="td-meta">{formatDateTime(startedAt)}</td>
-                  <td className="td-meta">{formatDateTime(finishedAt)}</td>
+                  <td className="td-meta">{formatDateTime(startedAt, locale)}</td>
+                  <td className="td-meta">{formatDateTime(finishedAt, locale)}</td>
                   <td className="td-meta">{formatDuration(elapsedSeconds)}</td>
                   <td className="td-score sticky-score" style={{ color: scoreColor }}>
                     {formatFr(totalScore)}
@@ -231,7 +239,7 @@ export default function ResultsTable({
                       key={q.id}
                       className="td-q"
                       onClick={() => setReviewIdx(questions.indexOf(q))}
-                      title="Cliquer pour réviser cette question"
+                      title={t('results.reviewQuestionTooltip')}
                     >
                       <QuestionCell
                         question={q}
@@ -251,16 +259,16 @@ export default function ResultsTable({
               className="btn btn-secondary"
               onClick={() => setReviewIdx(0)}
             >
-              📋 Réviser toutes les réponses
+              📋 {t('results.reviewAll')}
             </button>
             <button className="btn btn-ghost" onClick={resetTest}>
-              🔄 Nouvel examen
+              🔄 {t('results.newExam')}
             </button>
           </div>
 
           {/* Per-question score breakdown */}
           <div className="breakdown-section">
-            <h2 className="breakdown-title">Détail par question</h2>
+            <h2 className="breakdown-title">{t('results.breakdownTitle')}</h2>
             <div className="breakdown-grid">
               {questionDetails.map(({ q, selected, correct, score }) => {
                 const status = getQuestionStatus(q.id);
@@ -292,14 +300,14 @@ export default function ResultsTable({
                       )}
                     </div>
                     <div className="bk-selected">
-                      Sélectionné : {selected.length > 0 ? selected.map(k => k.toUpperCase()).join(', ') : '—'}
+                      {t('results.selectedLabel')} {selected.length > 0 ? selected.map(k => k.toUpperCase()).join(', ') : '—'}
                     </div>
                     {hasCorrect && (
                       <div className="bk-correct-keys">
-                        Correct : {correct.map(k => k.toUpperCase()).join(', ')}
+                        {t('results.correctLabel')} {correct.map(k => k.toUpperCase()).join(', ')}
                       </div>
                     )}
-                    <div className="bk-click-hint">Cliquer pour réviser →</div>
+                    <div className="bk-click-hint">{t('results.clickReviewHint')}</div>
                   </div>
                 );
               })}

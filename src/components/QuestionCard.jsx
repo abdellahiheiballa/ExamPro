@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { t } from '../i18n';
 import './QuestionCard.css';
 
 export default function QuestionCard({
@@ -31,7 +32,7 @@ export default function QuestionCard({
     <div className="qcard animate-in">
       {/* Header */}
       <div className="qcard-header">
-        <div className="qcard-num">Question {question.id}</div>
+        <div className="qcard-num">{t('question.number', { id: question.id })}</div>
         {questionScore && (
           <div className="qcard-score-badge">
             <span className={questionScore.score >= 0.8 ? 'score-high' : questionScore.score >= 0.4 ? 'score-mid' : 'score-low'}>
@@ -45,7 +46,7 @@ export default function QuestionCard({
       {/* Scenario */}
       {question.scenario && (
         <div className="qcard-scenario">
-          <div className="scenario-label">Mise en situation</div>
+          <div className="scenario-label">{t('question.scenario')}</div>
           <div className="scenario-text">{question.scenario}</div>
         </div>
       )}
@@ -89,13 +90,13 @@ export default function QuestionCard({
               <span className="option-text">{text}</span>
               {reviewMode && correctKeys?.length > 0 && (
                 <div className="option-badge">
-                  {isCorrect && isSelected && <span className="badge-correct">✔ Correct</span>}
-                  {isCorrect && !isSelected && <span className="badge-missed">↺ Manqué</span>}
-                  {!isCorrect && isSelected && <span className="badge-wrong">✖ Incorrect</span>}
+                  {isCorrect && isSelected && <span className="badge-correct">✔ {t('question.correct')}</span>}
+                  {isCorrect && !isSelected && <span className="badge-missed">↺ {t('question.missed')}</span>}
+                  {!isCorrect && isSelected && <span className="badge-wrong">✖ {t('question.wrong')}</span>}
                 </div>
               )}
               {isCheatCorrect && !reviewMode && (
-                <span className="cheat-marker">★ Réponse</span>
+                <span className="cheat-marker">★ {t('question.cheatMarker')}</span>
               )}
             </label>
           );
@@ -111,11 +112,11 @@ export default function QuestionCard({
               className={`btn-cheat ${showCheatLocal ? 'active' : ''}`}
               onClick={() => setShowCheatLocal(!showCheatLocal)}
             >
-              {showCheatLocal ? '🙈 Masquer les réponses' : '👁 Voir les réponses (triche)'}
+              {showCheatLocal ? t('question.hideAnswers') : t('question.showAnswers')}
             </button>
             {(showCheatLocal || isRevealed) && (
               <div className="correct-selector">
-                <span className="correct-selector-label">Marquer les réponses correctes :</span>
+                <span className="correct-selector-label">{t('question.markCorrect')}</span>
                 <div className="correct-keys">
                   {options.map(([key]) => (
                     <button
@@ -135,7 +136,7 @@ export default function QuestionCard({
 
       {/* Not answered notice */}
       {!answered && !reviewMode && (
-        <div className="not-answered">Sans réponse — aucun point attribué</div>
+        <div className="not-answered">{t('question.notAnswered')}</div>
       )}
     </div>
   );

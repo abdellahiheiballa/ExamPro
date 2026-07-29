@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { t } from '../i18n';
+import logo from '../assets/logo.jpeg';
 import './StartScreen.css';
 
 const SAMPLE = `Questions 1 à 2 - Exemple
@@ -60,21 +62,19 @@ export default function StartScreen({ onStart }) {
       <div className="start-container animate-in">
         <div className="start-header">
           <div className="logo">
-            <span className="logo-icon">⬡</span>
+            <img src={logo} alt="ExamPro logo" className="logo-image" />
             <span className="logo-text">ExamPro</span>
           </div>
-          <h1 className="start-title">Plateforme de certification</h1>
-          <p className="start-subtitle">
-            Collez vos questions ci-dessous pour démarrer un examen chronométré avec scoring automatique.
-          </p>
+          <h1 className="start-title">{t('start.title')}</h1>
+          <p className="start-subtitle">{t('start.subtitle')}</p>
         </div>
 
         <div className="start-body">
           <div className="start-left">
             <div className="field-label">
-              <span>Questions (texte brut)</span>
+              <span>{t('start.questionsLabel')}</span>
               <button className="btn-load-sample" onClick={() => setText(SAMPLE)}>
-                Charger exemple
+                {t('start.loadSample')}
               </button>
             </div>
             <div
@@ -85,27 +85,27 @@ export default function StartScreen({ onStart }) {
             >
               <textarea
                 className="start-textarea"
-                placeholder={`Collez vos questions ici...\n\nFormat attendu :\n\nQuestion 1\nMise en situation : ...\nMission : ...\nTexte de la question...\na.\nOption A\nb.\nOption B\n...\n\nQuestion 2\n...`}
+                placeholder={t('start.placeholder')}
                 value={text}
                 onChange={e => { setText(e.target.value); setError(''); }}
               />
-              {isDragging && <div className="drop-overlay">Déposez le fichier .txt ici</div>}
+              {isDragging && <div className="drop-overlay">{t('start.dropHint')}</div>}
             </div>
             {text && (
               <div className="text-stats">
-                <span>{text.length.toLocaleString()} caractères</span>
+                <span>{t('start.statsChars', { count: text.length.toLocaleString() })}</span>
                 <span>·</span>
-                <span>{text.split('\n').length} lignes</span>
+                <span>{t('start.statsLines', { count: text.split('\n').length })}</span>
               </div>
             )}
           </div>
 
           <div className="start-right">
             <div className="config-card">
-              <h3 className="config-title">Configuration</h3>
+              <h3 className="config-title">{t('start.configTitle')}</h3>
 
               <div className="config-field">
-                <label>Durée de l'examen</label>
+                <label>{t('start.durationLabel')}</label>
                 <div className="duration-options">
                   {[30, 60, 90, 120, 180].map(d => (
                     <button
@@ -118,7 +118,7 @@ export default function StartScreen({ onStart }) {
                   ))}
                 </div>
                 <div className="duration-custom">
-                  <label>Ou personnalisé :</label>
+                  <label>{t('start.durationCustomLabel')}</label>
                   <input
                     type="number"
                     min="1" max="360"
@@ -126,26 +126,26 @@ export default function StartScreen({ onStart }) {
                     onChange={e => setDuration(parseInt(e.target.value) || 90)}
                     className="duration-input"
                   />
-                  <span>minutes</span>
+                  <span>{t('start.minutes')}</span>
                 </div>
               </div>
 
               <div className="config-info">
                 <div className="info-row">
                   <span className="info-dot green" />
-                  <span>Réponse correcte sélectionnée : <strong>+0,20 pts</strong></span>
+                  <span>{t('start.correctSelected')}</span>
                 </div>
                 <div className="info-row">
                   <span className="info-dot red" />
-                  <span>Réponse incorrecte sélectionnée : <strong>−0,05 pts</strong></span>
+                  <span>{t('start.incorrectSelected')}</span>
                 </div>
                 <div className="info-row">
                   <span className="info-dot gray" />
-                  <span>Correcte non sélectionnée : <strong>0 pts</strong></span>
+                  <span>{t('start.correctNotSelected')}</span>
                 </div>
                 <div className="info-row">
                   <span className="info-dot blue" />
-                  <span>Score minimum par question : <strong>0</strong></span>
+                  <span>{t('start.scoreMin')}</span>
                 </div>
               </div>
 
@@ -157,26 +157,26 @@ export default function StartScreen({ onStart }) {
                 disabled={!text.trim()}
               >
                 <span>▶</span>
-                Démarrer l'examen
+                {t('start.startButton')}
               </button>
             </div>
 
             <div className="features-grid">
               <div className="feature">
                 <span className="feature-icon">⏱</span>
-                <span>Chronomètre</span>
+                <span>{t('start.features.chrono')}</span>
               </div>
               <div className="feature">
                 <span className="feature-icon">📊</span>
-                <span>Scoring temps réel</span>
+                <span>{t('start.features.scoring')}</span>
               </div>
               <div className="feature">
                 <span className="feature-icon">💾</span>
-                <span>Sauvegarde auto</span>
+                <span>{t('start.features.autosave')}</span>
               </div>
               <div className="feature">
                 <span className="feature-icon">📋</span>
-                <span>Rapport détaillé</span>
+                <span>{t('start.features.report')}</span>
               </div>
             </div>
           </div>

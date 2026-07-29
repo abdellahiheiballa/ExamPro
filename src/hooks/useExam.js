@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { parseQuestions, computeQuestionScore } from '../utils/parser';
+import { t } from '../i18n';
 
 const STORAGE_KEY = 'exam_session_v2';
 
@@ -69,7 +70,7 @@ export function useExam() {
 
   const startTest = useCallback((text, durationMinutes = 90) => {
     const parsed = parseQuestions(text);
-    if (!parsed.length) return { error: 'Aucune question détectée. Vérifiez le format du texte.' };
+    if (!parsed.length) return { error: t('start.error.noQuestions') };
     const secs = durationMinutes * 60;
     setQuestions(parsed);
     setAnswers({});

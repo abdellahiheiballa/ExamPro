@@ -191,11 +191,20 @@ export function formatDuration(seconds) {
   return `${s}s`;
 }
 
-export function formatDateTime(ts) {
+export function formatDateTime(ts, locale = 'ar') {
   if (!ts) return '—';
   const d = new Date(ts);
+  if (locale === 'fr') {
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month}/${year} ${hh}:${mm}`;
+  }
+
   const day = d.getDate();
-  const months = ['jan','fév','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'];
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const month = months[d.getMonth()];
   const year = d.getFullYear();
   const hh = d.getHours().toString().padStart(2, '0');
