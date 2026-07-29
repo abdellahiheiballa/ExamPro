@@ -47,6 +47,14 @@ export async function updateAdminUser({ token, userId, username, studentId, role
   });
 }
 
+export async function importAdminUsers({ token, csv }) {
+  return request('/api/admin/users/bulk-import', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ csv }),
+  });
+}
+
 export async function resetAdminUserPassword({ token, userId }) {
   return request(`/api/admin/users/${userId}/reset-password`, {
     method: 'POST',
@@ -163,6 +171,18 @@ export async function logExamEvent({ token, sessionId, eventType, payload }) {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ eventType, payload }),
+  });
+}
+
+export async function fetchActiveMonitoringSessions({ token }) {
+  return request('/api/admin/monitoring/active-sessions', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function fetchAdminReports({ token }) {
+  return request('/api/admin/reports', {
+    headers: { Authorization: `Bearer ${token}` },
   });
 }
 

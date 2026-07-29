@@ -100,6 +100,38 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   res.json({ users: result.rows });
 });
 
+app.post('/api/admin/users/bulk-import', requireAdmin, async (req, res) => {
+  const { csv } = req.body;
+  if (!csv || !csv.trim()) return res.status(400).json({ error: 'CSV content is required' });
+
+  const rows = csv.trim().split(/\r?\n/).filter(Boolean);
+  if (rows.length < 2) return res.status(400).json({ error: 'CSV must include headers and at least one row' });
+
+  const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+  const created = [];
+
+  for (let i = 1; i < rows.length; i += 1) {
+    const values = rows[i].split(',').map(v => v.trim());
+    const row = Object.fromEntries(headers.map((header, index) => [header, values[index] || '']));
+    if (!row.username || !row.password) continue;
+    const user = await createUser({
+      username: row.username,
+      password: row.password,
+      studentId: row.studentid || row.student_id || null,
+      role: row.role || 'student',
+      department: row.department || null,
+      isActive: row.isactive !== 'false',
+      nationalId: row.nationalid || row.national_id || null,
+      email: row.email || null,
+      phone: row.phone || null,
+      photoUrl: row.photourl || row.photo_url || null,
+    });
+    created.push(user);
+  }
+
+  res.json({ created, count: created.length });
+});
+
 app.post('/api/admin/users', requireAdmin, async (req, res) => {
   const { username, password, studentId, role, department, isActive, nationalId, email, phone, photoUrl } = req.body;
   if (!username || !password || !role) return res.status(400).json({ error: 'Missing required user fields' });
@@ -139,27 +171,30 @@ app.get('/api/admin/questions', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/questions', requireAdmin, async (req, res) => {
-  const { text, options, correctKeys, marks, difficulty, topic, explanation } = req.body;
+  const { text, options, correctKeys, marks, difficulty, topic, explanation, questionType, timeEstimate, tags, category, attachments } = req.body;
   if (!text) return res.status(400).json({ error: 'Question text is required' });
-  if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).length === 0) {
-    return res.status(400).json({ error: 'Question options must be provided' });
-  }
-  if (!correctKeys || !Array.isArray(correctKeys) || correctKeys.length === 0) {
-    return res.status(400).json({ error: 'Correct answer keys are required' });
+  const isEssay = (questionType || 'multiple_choice') === 'essay';
+  if (!isEssay) {
+    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).length === 0) {
+      return res.status(400).json({ error: 'Question options must be provided for non-essay questions' });
+    }
+    if (!correctKeys || !Array.isArray(correctKeys) || correctKeys.length === 0) {
+      return res.status(400).json({ error: 'Correct answer keys are required for non-essay questions' });
+    }
   }
   const result = await query(
-    'INSERT INTO questions (author_id, text, options, correct_keys, marks, difficulty, topic, explanation) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-    [req.user.id, text, options, correctKeys || [], marks || 1, difficulty || null, topic || null, explanation || null]
+    'INSERT INTO questions (author_id, text, options, correct_keys, marks, difficulty, topic, explanation, question_type, time_estimate, tags, category, attachments) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *',
+    [req.user.id, text, options || {}, correctKeys || [], marks || 1, difficulty || null, topic || null, explanation || null, questionType || 'multiple_choice', timeEstimate || null, tags || [], category || null, attachments || []]
   );
   res.json({ question: result.rows[0] });
 });
 
 app.patch('/api/admin/questions/:questionId', requireAdmin, async (req, res) => {
   const { questionId } = req.params;
-  const { text, options, correctKeys, marks, difficulty, topic, explanation } = req.body;
+  const { text, options, correctKeys, marks, difficulty, topic, explanation, questionType, timeEstimate, tags, category, attachments } = req.body;
   const result = await query(
-    'UPDATE questions SET text = COALESCE($1, text), options = COALESCE($2, options), correct_keys = COALESCE($3, correct_keys), marks = COALESCE($4, marks), difficulty = COALESCE($5, difficulty), topic = COALESCE($6, topic), explanation = COALESCE($7, explanation) WHERE id = $8 RETURNING *',
-    [text, options, correctKeys, marks, difficulty, topic, explanation, questionId]
+    'UPDATE questions SET text = COALESCE($1, text), options = COALESCE($2, options), correct_keys = COALESCE($3, correct_keys), marks = COALESCE($4, marks), difficulty = COALESCE($5, difficulty), topic = COALESCE($6, topic), explanation = COALESCE($7, explanation), question_type = COALESCE($8, question_type), time_estimate = COALESCE($9, time_estimate), tags = COALESCE($10, tags), category = COALESCE($11, category), attachments = COALESCE($12, attachments) WHERE id = $13 RETURNING *',
+    [text, options, correctKeys, marks, difficulty, topic, explanation, questionType, timeEstimate, tags, category, attachments, questionId]
   );
   res.json({ question: result.rows[0] });
 });
@@ -227,6 +262,27 @@ app.get('/api/admin/exam-sessions', requireAdmin, async (req, res) => {
      ORDER BY s.created_at DESC`
   );
   res.json({ sessions: sessions.rows });
+});
+
+app.get('/api/admin/monitoring/active-sessions', requireAdmin, async (req, res) => {
+  const sessions = await query(
+    `SELECT s.id, s.status, s.time_left, s.current_question, s.auto_saved_at, u.username AS student_name, e.title AS exam_title
+     FROM exam_sessions s
+     JOIN users u ON u.id = s.student_id
+     JOIN exams e ON e.id = s.exam_id
+     WHERE s.status IN ('running', 'submitted', 'paused')
+     ORDER BY s.created_at DESC`
+  );
+
+  const rows = sessions.rows.map((session) => {
+    const autoSavedAt = session.auto_saved_at ? new Date(session.auto_saved_at).getTime() : 0;
+    const now = Date.now();
+    const isOnline = autoSavedAt && now - autoSavedAt < 180000;
+    const progress = session.current_question != null && session.current_question > 0 ? Math.min(100, Math.round((session.current_question / 20) * 100)) : 0;
+    return { ...session, status: isOnline ? 'online' : 'offline', progress };
+  });
+
+  res.json({ sessions: rows });
 });
 
 app.get('/api/admin/exam-sessions/:sessionId/logs', requireAdmin, async (req, res) => {
@@ -320,8 +376,32 @@ app.post('/api/exam-sessions/:sessionId/log', requireAuth, async (req, res) => {
 });
 
 app.get('/api/admin/reports', requireAdmin, async (req, res) => {
+  const sessions = await query('SELECT score, percentage, passed, status FROM exam_sessions');
   const reports = await query('SELECT * FROM reports ORDER BY created_at DESC');
-  res.json({ reports });
+  const completed = sessions.rows.filter((session) => session.status === 'submitted' || session.status === 'terminated');
+  const passed = completed.filter((session) => session.passed);
+  const failed = completed.filter((session) => !session.passed && session.passed !== null);
+  const averageScore = completed.length ? completed.reduce((sum, session) => sum + Number(session.score || 0), 0) / completed.length : 0;
+  const averagePercentage = completed.length ? completed.reduce((sum, session) => sum + Number(session.percentage || 0), 0) / completed.length : 0;
+
+  res.json({
+    summary: {
+      totalSessions: sessions.rows.length,
+      completedSessions: completed.length,
+      passedCount: passed.length,
+      failedCount: failed.length,
+      passRate: completed.length ? (passed.length / completed.length) * 100 : 0,
+      averageScore,
+      averagePercentage,
+    },
+    attendance: {
+      total: sessions.rows.length,
+      completed: completed.length,
+      pending: sessions.rows.length - completed.length,
+    },
+    incidents: reports.rows,
+    sessions: sessions.rows,
+  });
 });
 
 const port = process.env.PORT || 4000;

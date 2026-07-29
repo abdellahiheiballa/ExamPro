@@ -1,6 +1,7 @@
 import pg from 'pg';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 
@@ -35,6 +36,15 @@ async function run() {
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     await client.query(schemaSql);
     console.log('Schema created or already exists.');
+
+    const migrationFiles = ['./migrate_schema_v2.js', './migrate_schema_v3.js'];
+    for (const migrationFile of migrationFiles) {
+      try {
+        await import(pathToFileURL(path.resolve(migrationFile)).href);
+      } catch (err) {
+        console.warn(`Skipping ${migrationFile}: ${err.message}`);
+      }
+    }
 
     const users = [
       { username: 'admin', password: 'admin123', studentId: null, role: 'admin' },
