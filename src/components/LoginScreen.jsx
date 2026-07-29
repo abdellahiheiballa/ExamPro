@@ -75,7 +75,7 @@ export default function LoginScreen({ onLogin }) {
 
         <form onSubmit={handleSubmit}>
           <label>
-            {t('login.username')}
+            {mode === 'student' ? 'Username or Student ID' : t('login.username')}
             <input value={username} onChange={(e) => setUsername(e.target.value)} required />
           </label>
           <label>

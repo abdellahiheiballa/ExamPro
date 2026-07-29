@@ -157,8 +157,8 @@ export default function AdminDashboard({ token, user, onLogout }) {
   const handleResetPassword = async (userId) => {
     try {
       setError('');
-      await resetAdminUserPassword({ token, userId, password: 'Password123!' });
-      setSuccess('Password reset to Password123!');
+      const res = await resetAdminUserPassword({ token, userId });
+      setSuccess(`Password reset to ${res.temporaryPassword}. User must change password at next login.`);
     } catch (err) {
       setError(err.message);
       setSuccess('');

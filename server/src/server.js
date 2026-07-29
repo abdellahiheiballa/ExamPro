@@ -43,10 +43,19 @@ app.post('/api/auth/login', async (req, res) => {
   if (!user) return res.status(401).json({ error: 'Invalid credentials or disabled account' });
 
   const token = signToken(user);
-  res.json({ token, user: { id: user.id, username: user.username, role: user.role, studentId: user.student_id } });
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      studentId: user.student_id,
+      mustChangePassword: user.must_change_password || false,
+    },
+  });
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', requireAdmin, async (req, res) => {
   const { username, password, studentId, role } = req.body;
   if (!username || !password || !role) return res.status(400).json({ error: 'Missing required field' });
   try {
@@ -114,11 +123,14 @@ app.patch('/api/admin/users/:userId', requireAdmin, async (req, res) => {
 
 app.post('/api/admin/users/:userId/reset-password', requireAdmin, async (req, res) => {
   const { userId } = req.params;
-  const { password } = req.body;
-  if (!password) return res.status(400).json({ error: 'Password is required' });
-  const password_hash = await bcrypt.hash(password, 10);
-  const result = await query('UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING id, username, role', [password_hash, userId]);
-  res.json({ user: result.rows[0] });
+  const tempPassword = Math.random().toString(36).slice(-10) + 'A1!';
+  const password_hash = await bcrypt.hash(tempPassword, 10);
+  const result = await query(
+    'UPDATE users SET password_hash = $1, must_change_password = true WHERE id = $2 RETURNING id, username, role',
+    [password_hash, userId]
+  );
+  if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
+  res.json({ user: result.rows[0], temporaryPassword: tempPassword });
 });
 
 app.get('/api/admin/questions', requireAdmin, async (req, res) => {
@@ -229,6 +241,17 @@ app.post('/api/exam-sessions', requireAuth, async (req, res) => {
   if (timeLeft == null) return res.status(400).json({ error: 'Remaining time is required' });
   if (currentQuestion == null) return res.status(400).json({ error: 'Current question index is required' });
   if (answers == null) return res.status(400).json({ error: 'Answer payload is required' });
+
+  const examCheck = await query(
+    `SELECT e.id FROM exams e
+     JOIN class_members cm ON cm.class_id = e.class_id
+     WHERE e.id = $1 AND cm.user_id = $2 AND cm.role = 'student'`,
+    [examId, req.user.id]
+  );
+  if (!examCheck.rows.length) {
+    return res.status(403).json({ error: 'Not authorized for this exam' });
+  }
+
   const result = await query(
     'INSERT INTO exam_sessions (exam_id, student_id, started_at, status, current_question, time_left, answers, auto_saved_at) VALUES ($1, $2, now(), $3, $4, $5, $6, now()) RETURNING *',
     [examId, req.user.id, 'running', currentQuestion, timeLeft, answers]
@@ -239,11 +262,35 @@ app.post('/api/exam-sessions', requireAuth, async (req, res) => {
 app.patch('/api/exam-sessions/:sessionId', requireAuth, async (req, res) => {
   const { sessionId } = req.params;
   const { timeLeft, currentQuestion, answers, status } = req.body;
+
+  const sessionOwner = await query('SELECT student_id FROM exam_sessions WHERE id = $1', [sessionId]);
+  if (!sessionOwner.rows.length) return res.status(404).json({ error: 'Session not found' });
+  if (sessionOwner.rows[0].student_id !== req.user.id) {
+    return res.status(403).json({ error: 'Not authorized to update this session' });
+  }
+
   const result = await query(
     'UPDATE exam_sessions SET time_left = $1, current_question = $2, answers = $3, auto_saved_at = now(), status = COALESCE($4, status) WHERE id = $5 RETURNING *',
     [timeLeft, currentQuestion, answers, status, sessionId]
   );
   res.json({ session: result.rows[0] });
+});
+
+app.patch('/api/auth/change-password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new passwords are required' });
+  }
+
+  const userResult = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+  if (!userResult.rows.length) return res.status(404).json({ error: 'User not found' });
+
+  const valid = await bcrypt.compare(currentPassword, userResult.rows[0].password_hash);
+  if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+  const password_hash = await bcrypt.hash(newPassword, 10);
+  await query('UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2', [password_hash, req.user.id]);
+  res.json({ changed: true });
 });
 
 app.post('/api/exam-sessions/:sessionId/log', requireAuth, async (req, res) => {

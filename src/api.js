@@ -47,11 +47,18 @@ export async function updateAdminUser({ token, userId, username, studentId, role
   });
 }
 
-export async function resetAdminUserPassword({ token, userId, password }) {
+export async function resetAdminUserPassword({ token, userId }) {
   return request(`/api/admin/users/${userId}/reset-password`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ password }),
+  });
+}
+
+export async function changePassword({ token, currentPassword, newPassword }) {
+  return request('/api/auth/change-password', {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword }),
   });
 }
 

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL CHECK (role IN ('admin', 'teacher', 'student')),
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   department TEXT,
+  must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
