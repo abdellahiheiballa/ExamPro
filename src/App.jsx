@@ -4,10 +4,16 @@ import { getLocale, setLocale, t } from './i18n';
 import StartScreen from './components/StartScreen';
 import TestInterface from './components/TestInterface';
 import ResultsTable from './components/ResultsTable';
+import LoginScreen from './components/LoginScreen';
+import AdminDashboard from './components/AdminDashboard';
+import StudentDashboard from './components/StudentDashboard';
 
 export default function App() {
   const exam = useExam();
   const [locale, setLocaleState] = useState(getLocale());
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [selectedExam, setSelectedExam] = useState(null);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -17,6 +23,103 @@ export default function App() {
   const handleLocaleChange = (newLocale) => {
     setLocale(newLocale);
     setLocaleState(newLocale);
+  };
+
+  const handleLogin = (data) => {
+    setToken(data.token);
+    setUser(data.user);
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    setSelectedExam(null);
+  };
+
+  const handleStartExam = (selectedExam) => {
+    setSelectedExam(selectedExam);
+    exam.startTest(selectedExam.exam_text || selectedExam.description || '', selectedExam.duration_minutes || 90);
+  };
+
+  const renderContent = () => {
+    if (!user) return <LoginScreen onLogin={handleLogin} />;
+
+    if (user.role === 'admin' || user.role === 'teacher') {
+      return <AdminDashboard token={token} user={user} onLogout={handleLogout} />;
+    }
+
+    if (user.role === 'student') {
+      if (exam.phase === 'start') {
+        return <StudentDashboard token={token} user={user} onStartExam={handleStartExam} />;
+      }
+      if (exam.phase === 'test') {
+        return (
+          <TestInterface
+            questions={exam.questions}
+            answers={exam.answers}
+            correctAnswers={exam.correctAnswers}
+            currentIdx={exam.currentIdx}
+            timeLeft={exam.timeLeft}
+            totalTime={exam.totalTime}
+            showCheat={exam.showCheat}
+            setShowCheat={exam.setShowCheat}
+            reviewMode={exam.reviewMode}
+            setReviewMode={exam.setReviewMode}
+            toggleAnswer={exam.toggleAnswer}
+            setCorrectForQuestion={exam.setCorrectForQuestion}
+            goToQuestion={exam.goToQuestion}
+            handleSubmit={exam.handleSubmit}
+            resetTest={exam.resetTest}
+            getQuestionScore={exam.getQuestionScore}
+            getQuestionStatus={exam.getQuestionStatus}
+            startedAt={exam.startedAt}
+            finishedAt={exam.finishedAt}
+          />
+        );
+      }
+      return (
+        <ResultsTable
+          questions={exam.questions}
+          answers={exam.answers}
+          correctAnswers={exam.correctAnswers}
+          startedAt={exam.startedAt}
+          finishedAt={exam.finishedAt}
+          elapsedSeconds={exam.elapsedSeconds}
+          getQuestionScore={exam.getQuestionScore}
+          getQuestionStatus={exam.getQuestionStatus}
+          resetTest={exam.resetTest}
+          toggleAnswer={exam.toggleAnswer}
+          setCorrectForQuestion={exam.setCorrectForQuestion}
+        />
+      );
+    }
+
+    return (
+      <div className="app-shell">
+        <div className="app-language-switcher">
+          <span>{t('language.label')}:</span>
+          {['ar', 'fr'].map(code => (
+            <button
+              key={code}
+              className={`lang-btn ${locale === code ? 'active' : ''}`}
+              onClick={() => handleLocaleChange(code)}
+              type="button"
+            >
+              {t(`language.${code}`)}
+            </button>
+          ))}
+        </div>
+        <div className="login-screen">
+          <div className="login-card">
+            <h1>Unsupported role</h1>
+            <p>Please contact the administrator if you cannot access the app.</p>
+            <button className="btn btn-primary" type="button" onClick={handleLogout}>
+              Back to login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -34,52 +137,7 @@ export default function App() {
           </button>
         ))}
       </div>
-
-      {exam.phase === 'start' && (
-        <StartScreen
-          onStart={(text, duration) => exam.startTest(text, duration)}
-        />
-      )}
-
-      {exam.phase === 'test' && (
-        <TestInterface
-          questions={exam.questions}
-          answers={exam.answers}
-          correctAnswers={exam.correctAnswers}
-          currentIdx={exam.currentIdx}
-          timeLeft={exam.timeLeft}
-          totalTime={exam.totalTime}
-          showCheat={exam.showCheat}
-          setShowCheat={exam.setShowCheat}
-          reviewMode={exam.reviewMode}
-          setReviewMode={exam.setReviewMode}
-          toggleAnswer={exam.toggleAnswer}
-          setCorrectForQuestion={exam.setCorrectForQuestion}
-          goToQuestion={exam.goToQuestion}
-          handleSubmit={exam.handleSubmit}
-          resetTest={exam.resetTest}
-          getQuestionScore={exam.getQuestionScore}
-          getQuestionStatus={exam.getQuestionStatus}
-          startedAt={exam.startedAt}
-          finishedAt={exam.finishedAt}
-        />
-      )}
-
-      {exam.phase === 'results' && (
-        <ResultsTable
-          questions={exam.questions}
-          answers={exam.answers}
-          correctAnswers={exam.correctAnswers}
-          startedAt={exam.startedAt}
-          finishedAt={exam.finishedAt}
-          elapsedSeconds={exam.elapsedSeconds}
-          getQuestionScore={exam.getQuestionScore}
-          getQuestionStatus={exam.getQuestionStatus}
-          resetTest={exam.resetTest}
-          toggleAnswer={exam.toggleAnswer}
-          setCorrectForQuestion={exam.setCorrectForQuestion}
-        />
-      )}
+      {renderContent()}
     </div>
   );
 }
