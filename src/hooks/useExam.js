@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { parseQuestions, computeQuestionScore } from '../utils/parser';
+import { createExamSession, saveExamSession } from '../api';
 import { t } from '../i18n';
 
 const STORAGE_KEY = 'exam_session_v2';
 
-export function useExam() {
+export function useExam(token) {
   const [phase, setPhase] = useState('start'); // start | test | results
   const [rawText, setRawText] = useState('');
+  const [examId, setExamId] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({}); // { qId: [selectedKeys] }
   const [correctAnswers, setCorrectAnswers] = useState({}); // { qId: [correctKeys] }
@@ -29,6 +32,8 @@ export function useExam() {
         const s = JSON.parse(saved);
         if (s.phase === 'test' || s.phase === 'results') {
           setPhase(s.phase);
+          setExamId(s.examId || null);
+          setSessionId(s.sessionId || null);
           setQuestions(s.questions || []);
           setAnswers(s.answers || {});
           setCorrectAnswers(s.correctAnswers || {});
@@ -46,11 +51,11 @@ export function useExam() {
   useEffect(() => {
     if (phase === 'start') return;
     const session = {
-      phase, questions, answers, correctAnswers,
+      phase, examId, sessionId, questions, answers, correctAnswers,
       currentIdx, timeLeft, totalTime, startedAt, finishedAt
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [phase, questions, answers, correctAnswers, currentIdx, timeLeft, totalTime, startedAt, finishedAt]);
+  }, [phase, examId, sessionId, questions, answers, correctAnswers, currentIdx, timeLeft, totalTime, startedAt, finishedAt]);
 
   // Timer
   useEffect(() => {
@@ -68,10 +73,45 @@ export function useExam() {
     return () => clearInterval(timerRef.current);
   }, [phase]);
 
-  const startTest = useCallback((text, durationMinutes = 90) => {
+  const saveCurrentSession = useCallback(async (payload = {}) => {
+    if (!token || !sessionId) return;
+    try {
+      await saveExamSession({
+        token,
+        sessionId,
+        timeLeft: payload.timeLeft ?? timeLeft,
+        currentQuestion: payload.currentQuestion ?? currentIdx,
+        answers: payload.answers ?? answers,
+        status: payload.status,
+      });
+    } catch (err) {
+      console.error('Failed to save exam session', err);
+    }
+  }, [token, sessionId, timeLeft, currentIdx, answers]);
+
+  const startTest = useCallback(async (newExamId, text, durationMinutes = 90) => {
     const parsed = parseQuestions(text);
     if (!parsed.length) return { error: t('start.error.noQuestions') };
     const secs = durationMinutes * 60;
+    let createdSessionId = null;
+
+    if (token) {
+      try {
+        const response = await createExamSession({
+          token,
+          examId: newExamId,
+          timeLeft: secs,
+          currentQuestion: 0,
+          answers: {},
+        });
+        createdSessionId = response.session?.id || null;
+      } catch (err) {
+        console.error('Unable to create exam session on server:', err);
+      }
+    }
+
+    setExamId(newExamId);
+    setSessionId(createdSessionId);
     setQuestions(parsed);
     setAnswers({});
     setCorrectAnswers({});
@@ -83,30 +123,33 @@ export function useExam() {
     setPhase('test');
     setReviewMode(false);
     return {};
-  }, []);
+  }, [token]);
 
   const toggleAnswer = useCallback((questionId, optionKey) => {
     setAnswers(prev => {
       const current = prev[questionId] || [];
       const exists = current.includes(optionKey);
-      return {
+      const next = {
         ...prev,
         [questionId]: exists
           ? current.filter(k => k !== optionKey)
           : [...current, optionKey],
       };
+      saveCurrentSession({ answers: next, currentQuestion: currentIdx, timeLeft });
+      return next;
     });
-  }, []);
+  }, [currentIdx, saveCurrentSession, timeLeft]);
 
   const setCorrectForQuestion = useCallback((questionId, keys) => {
     setCorrectAnswers(prev => ({ ...prev, [questionId]: keys }));
   }, []);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     clearInterval(timerRef.current);
     setFinishedAt(Date.now());
     setPhase('results');
-  }, []);
+    await saveCurrentSession({ status: 'completed', timeLeft: 0, currentQuestion: currentIdx });
+  }, [currentIdx, saveCurrentSession]);
 
   const resetTest = useCallback(() => {
     clearInterval(timerRef.current);

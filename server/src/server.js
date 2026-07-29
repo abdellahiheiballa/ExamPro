@@ -170,6 +170,18 @@ app.post('/api/admin/assign-student', requireAdmin, async (req, res) => {
   res.json({ assigned: result.rows[0] });
 });
 
+app.get('/api/admin/classes/:classId/members', requireAdmin, async (req, res) => {
+  const { classId } = req.params;
+  const result = await query(
+    `SELECT u.id, u.username, u.student_id
+     FROM class_members cm
+     JOIN users u ON u.id = cm.user_id
+     WHERE cm.class_id = $1 AND cm.role = 'student'`,
+    [classId]
+  );
+  res.json({ members: result.rows });
+});
+
 app.get('/api/exams/:examId/sessions', requireAdmin, async (req, res) => {
   const { examId } = req.params;
   const sessions = await query('SELECT * FROM exam_sessions WHERE exam_id = $1 ORDER BY created_at DESC', [examId]);

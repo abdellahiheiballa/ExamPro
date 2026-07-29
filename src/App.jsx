@@ -9,10 +9,10 @@ import AdminDashboard from './components/AdminDashboard';
 import StudentDashboard from './components/StudentDashboard';
 
 export default function App() {
-  const exam = useExam();
+  const [token, setToken] = useState(null);
+  const exam = useExam(token);
   const [locale, setLocaleState] = useState(getLocale());
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
 
   useEffect(() => {
@@ -36,9 +36,13 @@ export default function App() {
     setSelectedExam(null);
   };
 
-  const handleStartExam = (selectedExam) => {
+  const handleStartExam = async (selectedExam) => {
     setSelectedExam(selectedExam);
-    exam.startTest(selectedExam.exam_text || selectedExam.description || '', selectedExam.duration_minutes || 90);
+    await exam.startTest(
+      selectedExam.id,
+      selectedExam.exam_text || selectedExam.description || '',
+      selectedExam.duration_minutes || 90,
+    );
   };
 
   const renderContent = () => {

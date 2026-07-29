@@ -39,6 +39,8 @@ export default function AdminDashboard({ token, user, onLogout }) {
   const [userStudentId, setUserStudentId] = useState('');
   const [userDepartment, setUserDepartment] = useState('');
   const [userActive, setUserActive] = useState(true);
+  const [classMembers, setClassMembers] = useState({});
+  const [assignSelection, setAssignSelection] = useState({});
   const [questionText, setQuestionText] = useState('');
   const [questionOptions, setQuestionOptions] = useState('a. Option A\nb. Option B\nc. Option C');
   const [questionKeys, setQuestionKeys] = useState('a');
@@ -68,6 +70,12 @@ export default function AdminDashboard({ token, user, onLogout }) {
       if (!examClassId && classList.length > 0) {
         setExamClassId(String(classList[0].id));
       }
+      const membersByClass = {};
+      await Promise.all(classList.map(async (cls) => {
+        const res = await fetchClassMembers({ token, classId: cls.id });
+        membersByClass[cls.id] = Array.isArray(res?.members) ? res.members : [];
+      }));
+      setClassMembers(membersByClass);
     } catch (err) {
       setError(err.message);
     }
@@ -209,6 +217,9 @@ export default function AdminDashboard({ token, user, onLogout }) {
       setError('');
       await assignStudent({ token, classId, studentId: userId });
       setSuccess('Student assigned to class.');
+      const res = await fetchClassMembers({ token, classId });
+      setClassMembers((prev) => ({ ...prev, [classId]: Array.isArray(res?.members) ? res.members : [] }));
+      setAssignSelection((prev) => ({ ...prev, [classId]: '' }));
     } catch (err) {
       setError(err.message);
       setSuccess('');
@@ -269,6 +280,14 @@ export default function AdminDashboard({ token, user, onLogout }) {
               Duration (minutes)
               <input type="number" min="10" value={examDuration} onChange={(e) => setExamDuration(Number(e.target.value))} required />
             </label>
+            <label>
+              Exam Text
+              <textarea value={examText} onChange={(e) => setExamText(e.target.value)} rows={6} placeholder="Paste question text here..." />
+            </label>
+            <label>
+              Instructions
+              <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={3} placeholder="Exam instructions..." />
+            </label>
             <button className="btn btn-primary" type="submit">Create Exam</button>
           </form>
         </section>
@@ -276,6 +295,75 @@ export default function AdminDashboard({ token, user, onLogout }) {
 
       {error && <div className="admin-error">{error}</div>}
       {success && <div className="admin-success">{success}</div>}
+
+      <div className="admin-grid">
+        <section className="admin-card">
+          <h2>Create User</h2>
+          <form onSubmit={handleCreateUser}>
+            <label>
+              Username
+              <input value={userName} onChange={(e) => setUserName(e.target.value)} required />
+            </label>
+            <label>
+              Password
+              <input type="password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} required />
+            </label>
+            <label>
+              Role
+              <select value={userRole} onChange={(e) => setUserRole(e.target.value)}>
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <label>
+              Student ID
+              <input value={userStudentId} onChange={(e) => setUserStudentId(e.target.value)} />
+            </label>
+            <label>
+              Department
+              <input value={userDepartment} onChange={(e) => setUserDepartment(e.target.value)} />
+            </label>
+            <label className="checkbox-label">
+              <input type="checkbox" checked={userActive} onChange={(e) => setUserActive(e.target.checked)} />
+              Active
+            </label>
+            <button className="btn btn-primary" type="submit">Create User</button>
+          </form>
+        </section>
+
+        <section className="admin-card admin-list">
+          <h3>Users</h3>
+          {users.length === 0 ? <p>No users created yet.</p> : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Student ID</th>
+                  <th>Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.username}</td>
+                    <td>{u.role}</td>
+                    <td>{u.student_id || '-'}</td>
+                    <td>{u.is_active ? 'Yes' : 'No'}</td>
+                    <td>
+                      <button className="btn btn-secondary" type="button" onClick={() => handleResetPassword(u.id)}>
+                        Reset Password
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
 
       <div className="admin-list-grid">
         <section className="admin-card admin-list">
@@ -286,11 +374,44 @@ export default function AdminDashboard({ token, user, onLogout }) {
                 <li key={cls.id}>
                   <strong>{cls.name}</strong>
                   <p>{cls.description || 'No description'}</p>
+                  <label>
+                    Assign student
+                    <select
+                      value={assignSelection[cls.id] || ''}
+                      onChange={(e) => setAssignSelection((prev) => ({ ...prev, [cls.id]: e.target.value }))}
+                    >
+                      <option value="">Select student</option>
+                      {users.filter((u) => u.role === 'student').map((student) => (
+                        <option key={student.id} value={student.id}>{student.username} ({student.student_id || 'no ID'})</option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    disabled={!assignSelection[cls.id]}
+                    onClick={() => handleAssignStudent(cls.id, assignSelection[cls.id])}
+                  >
+                    Assign
+                  </button>
+                  <div className="class-members">
+                    <strong>Members:</strong>
+                    {classMembers[cls.id]?.length ? (
+                      <ul>
+                        {classMembers[cls.id].map((member) => (
+                          <li key={member.id}>{member.username} ({member.student_id || 'no ID'})</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No students assigned.</p>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </section>
+
         <section className="admin-card admin-list">
           <h3>Exams</h3>
           {exams.length === 0 ? <p>No exams created yet.</p> : (

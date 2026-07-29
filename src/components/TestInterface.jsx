@@ -127,13 +127,14 @@ export default function TestInterface({
         {/* Main content */}
         <main className="test-main">
           <QuestionCard
+            key={q.id}
             question={q}
             selectedKeys={answers[q.id] || []}
             correctKeys={correctAnswers[q.id] || []}
             onToggle={toggleAnswer}
             onSetCorrect={setCorrectForQuestion}
             showCheat={showCheat}
-            reviewMode={false}
+            reviewMode={reviewMode}
             questionScore={score}
           />
 

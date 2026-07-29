@@ -124,6 +124,12 @@ export async function fetchAdminClasses({ token }) {
   });
 }
 
+export async function fetchClassMembers({ token, classId }) {
+  return request(`/api/admin/classes/${classId}/members`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export async function fetchExamSessions({ token, examId }) {
   return request(`/api/exams/${examId}/sessions`, {
     headers: { Authorization: `Bearer ${token}` },
